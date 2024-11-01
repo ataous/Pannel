@@ -48,7 +48,17 @@ public:
   bool               ParsTaskJson(const string _json_text, const string _node_id);
   bool               IsValidTask(void);
   string             ResultJson(void);
- 
+
+  string             NewEquityChekPoint(void)
+   {
+    if(Result.IsSetEquityChekPoint())
+      return Result.EquityChekPoint();//EquityPoint.GetChekPoint();
+
+    if(IsResetTask())
+      return NULL;
+    //---
+    return CheckEquity();
+   }
  };
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -166,9 +176,7 @@ bool CTask::ParsTaskJson(const string _json_text, const string _node_id)
   AccountId((long)json[DEF_JSON_KEY_ACC_ID].ToInt());
   Login((long)json[DEF_JSON_KEY_LOGIN].ToInt());
   Password(json[DEF_JSON_KEY_PASS].ToStr());
-  Server(json[DEF_JSON_KEY_SERVER].ToStr());//"UNFXB-Real";
-  
-  
+  Server(json[DEF_JSON_KEY_SERVER].ToStr());
   CheckDeals(json[DEF_JSON_KEY_POINT_DEAL].ToStr());
   CheckEquity(json[DEF_JSON_KEY_POINT_EQ].ToStr());
   InitBalance(json[DEF_JSON_KEY_INIT_BALANCE].ToDbl());

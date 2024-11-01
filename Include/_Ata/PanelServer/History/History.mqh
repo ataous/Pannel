@@ -183,9 +183,6 @@ bool CHistory::Update(CTask *_Task)
       continue;
     AddLiveToPositionList(PositionInfo);
    }
-//---
-  //if(!UpdateData())
-  //  return false;
 //--- succeed
   return true;
  }
@@ -340,7 +337,7 @@ bool CHistory::DealsListCompletion(void)
     double balance = Task.EquityCheckPointBalance();
     double last_day_balance = m_init_balance;
     MqlDateTime prev_deal_time_str;
-    ::TimeToStruct(0, prev_deal_time_str);
+    ::TimeToStruct(Task.EquityCheckPointTimeMsc() / 1000, prev_deal_time_str);
     //---
     for(uint i = 0; i < total; i++)
      {
@@ -480,7 +477,7 @@ bool CHistory::AddLiveToPositionList(CPositionInfo & PositionInfo)
                                      DEAL_REASON_CLIENT,
                                      DealIn.PositionId(),
                                      PositionInfo.Volume(),
-                                     DealIn.DealType() == DEAL_TYPE_BUY ? ::SymbolInfoDouble(PositionInfo.Symbol(), SYMBOL_BID) : ::SymbolInfoDouble(PositionInfo.Symbol(), SYMBOL_ASK),
+                                     PositionInfo.PriceCurrent(),//DealIn.DealType() == DEAL_TYPE_BUY ? ::SymbolInfoDouble(PositionInfo.Symbol(), SYMBOL_BID) : ::SymbolInfoDouble(PositionInfo.Symbol(), SYMBOL_ASK),
                                      0,
                                      0,
                                      PositionInfo.Profit(),

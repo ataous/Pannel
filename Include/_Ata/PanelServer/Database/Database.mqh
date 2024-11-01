@@ -41,6 +41,7 @@ private:
   string             IntegerFild(const long _value);
   string             DoubleFild(const double _value, const int _digits = 8);
   string             DateTimeFild(const datetime _time);
+  string             Timestamp3Fild(const ulong _value);
 
   bool               CreateDatabase(void);
   bool               DropTables(void);
@@ -208,6 +209,13 @@ string CDatabase::DateTimeFild(const datetime _time)
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
+string CDatabase::Timestamp3Fild(const ulong _value)
+ {
+  return "FROM_UNIXTIME(" + (string)_value + "/1000)";
+ }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 bool CDatabase::Update(CTask              *_Task,
                        CHistory           *_History,
                        CSeries            *_Series,
@@ -241,12 +249,14 @@ bool CDatabase::Update(CTask              *_Task,
       continue;
     if(!StoreEquity())
       continue;
+    if(!StoreDrawdown())
+      continue;
     if(!StoreStatement())
       continue;
     if(!StoreObjective())
       continue;
-    if(!StoreCheckPoints())
-      continue;
+    //if(!StoreCheckPoints())
+    //  continue;
     if(!StorHistory(Task, true))
       continue;
     if(!TransactionCommit())
@@ -267,15 +277,11 @@ bool CDatabase::Update(CTask              *_Task,
 void CDatabase::SetInvalidAccount(const ulong _account_id)
  {
   string query = NULL;
-  query  = "REPLACE INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_INVALID_ACCOUNT + "` (";
+  query  = "INSERT INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_INVALID_ACCOUNT + "` (";
   query += "`account_id`";      //INT UNSIGNED      NOT NULL,";
   query += ") VALUES (";
   query += IntegerFild(_account_id);
   query += ");";
-//---
-//string query = "UPDATE `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_ACCOUNT +
-//               "` SET `account_status`=" + (string)DEF_DB_INVALID_ACC_CODE +
-//               " WHERE `id` = " + (string)_account_id + ";";
 //---
   DB.Execute(query);
  }
@@ -299,19 +305,7 @@ bool CDatabase::CreateDatabase(void)
 //+------------------------------------------------------------------+
 bool CDatabase::DropTables(void)
  {
-  string query = "DROP TABLE IF EXISTS `sgb`.`statement`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`objective`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`equity`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`balance`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`balance_equity`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`position`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`transaction`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`deal`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`account`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`server`;";
-  query += "DROP TABLE IF EXISTS `sgb`.`user`; ";
-//---
-  return Execute(query);
+  return true;
  }
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -738,104 +732,17 @@ bool CDatabase::CreateTableStatement(void)
 //+------------------------------------------------------------------+
 bool CDatabase::FillTempData(void)
  {
-
-  string query = "";
-//--- fill user
-  query += "INSERT INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_USER + "` ( `first_name`, `last_name`, `email`, `password` ) VALUES ";
-  query += "( 'test_1',    'tester_1',    'Ghasemgolalizade1369@yahoo.com',   'temp_pass1' ),";
-  query += "( 'test_2',    'tester_2',    'hasankarimiyan47@gmail.com',       'temp_pass2' ),";
-  query += "( 'test_3',    'tester_3',    'erfanijavad0@gmail.com',           'temp_pass3' ),";
-  query += "( 'test_4',    'tester_4',    'dararahmati1366@gmail.com',        'temp_pass4' ),";
-  query += "( 'test_5',    'tester_5',    'sahar1ndco@gmail.com',             'temp_pass5' ),";
-  query += "( 'test_6',    'tester_6',    'samaxanmirzayi@gmail.com',         'temp_pass6' ),";
-  query += "( 'test_7',    'tester_7',    'teolhhiadm@gmail.com',             'temp_pass7' ),";
-  query += "( 'test_8',    'tester_8',    'arashghobadi795@gmail.com',        'temp_pass8' ),";
-  query += "( 'test_9',    'tester_9',    'Alimazuniii@gmail.com',            'temp_pass9' ),";
-  query += "( 'test_10',   'tester_10',   'sadeghi650@gmail.com',             'temp_pass10' ),";
-  query += "( 'test_11',   'tester_11',   'shahramavd@yahoo.com',             'temp_pass11' ),";
-  query += "( 'test_12',   'tester_12',   'shahmaribehzad9@gmail.com',        'temp_pass12' ),";
-  query += "( 'test_13',   'tester_13',   'Amirhosseinrohani77@gmail.com',    'temp_pass13' ),";
-  query += "( 'test_14',   'tester_14',   'aramrehmeti@gmail.com',            'temp_pass14' ),";
-  query += "( 'test_15',   'tester_15',   'mirshamsi1344@gmail.com',          'temp_pass15' ),";
-  query += "( 'test_16',   'tester_16',   'naderramezani13@gmail.com',        'temp_pass16' ),";
-  query += "( 'test_17',   'tester_17',   'hamed.zahra9713@gmail.com',        'temp_pass17' ),";
-  query += "( 'test_18',   'tester_18',   'farshad.kamrava@gmail.com',        'temp_pass18' ),";
-  query += "( 'test_19',   'tester_19',   'anush.sharifi95@gmail.com',        'temp_pass19' );";
-//--- fill server
-  query += "INSERT INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_SERVER + "` ( `broker_name`, `server`, `domain`, `platform`, `type` ) VALUES ";
-  query += "( 'UNFXB', 'UNFXB-REAL', '-', 'mt5', 'demo' );";
-//--- fill account
-  query += "INSERT INTO `sgb`.`account` ( `user_id`,`server_id`,`login`, `pasword`, `investor_password`) VALUES ";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'Ghasemgolalizade1369@yahoo.com' LIMIT 1),";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1),";
-  query += "288263, '-', '!dp0rGcd' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'hasankarimiyan47@gmail.com' LIMIT 1),";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1),";
-  query += "288265, '-', '9Y&amMwi' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'erfanijavad0@gmail.com' LIMIT 1),";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1),";
-  query += "288266, '-', '!nlnAn7J' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'dararahmati1366@gmail.com' LIMIT 1),";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1),";
-  query += "288267, '-', 'lY&*e284' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'sahar1ndco@gmail.com' LIMIT 1),";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288268, '-', 'p2#qNDLq' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'samaxanmirzayi@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288269, '-', 'ALN1_@6g' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'teolhhiadm@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288270, '-', ']N0yK)$0' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'arashghobadi795@gmail.com' LIMIT 1),";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288272, '-', '8c^pk8Se' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'Alimazuniii@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288273, '-', '%&bR(%9F' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'sadeghi650@gmail.com' LIMIT 1),";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288274, '-', ')d@eCAK7' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'shahramavd@yahoo.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288275, '-', 'V%)JFO4m' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'shahmaribehzad9@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288276, '-', '*322WLi[' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'Amirhosseinrohani77@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288278, '-', 'a(bfX3u*' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'aramrehmeti@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288282, '-', '7KiPbHq)' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'mirshamsi1344@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288283, '-', 'k@V7ru9E' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'naderramezani13@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288284, '-', 'CeUcX)g7' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'hamed.zahra9713@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288286, '-', 'X6qf90(U' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'farshad.kamrava@gmail.com' LIMIT 1), ";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288287, '-', 'M3wX*a[d' ),";
-  query += "( (SELECT id From `sgb`.`user` WHERE `user`.email = 'anush.sharifi95@gmail.com' LIMIT 1),";
-  query += "(SELECT id From `sgb`.`server` WHERE `server`.`server` = 'UNFXB-REAL' LIMIT 1), ";
-  query += "288289, '-', '2n^2#F]r' );";
-
-  return Execute(query);
+  return true;
  }
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
 bool CDatabase::StoreAccountData(void)
  {
-//---
   string query = NULL;
   m_hash_id = Task.HashID();
 
-  query += "REPLACE INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_ACCOUNT + "` (";
+  query  = "INSERT INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_ACCOUNT + "` (";
 
   query += "`id`,";                       // int unsigned NOT NULL,
   query += "`server`,";                   // varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -843,10 +750,10 @@ bool CDatabase::StoreAccountData(void)
   query += "`investor_password`,";        // varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   if(Task.Result.ErrorCode() == 0)
    {
-    query += "`hash_point_a`,";             // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-    query += "`hash_point_b`,";             // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    query += "`hash_point_a`,";           // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    query += "`hash_point_b`,";           // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     query += "`last_update`,";            // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    query += "`history_id`,";             // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    query += "`last_history_id`,";        // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
    }
   query += "`task`,";                     // int NOT NULL,
   query += "`algorithm`,";                // int NOT NULL,
@@ -855,17 +762,15 @@ bool CDatabase::StoreAccountData(void)
   query += "`total_drawdown_percent`,";   // decimal(5, 2) NOT NULL,
   query += "`tick_scalp_enable`,";        // tinyint(1) NOT NULL,
   query += "`tick_scalp_term`,";          // int NOT NULL,
-  query += "`gambeling_enable`,";         // tinyint(1) NOT NULL,
-  query += "`gambeling_percent`,";        // decimal(5, 2) NOT NULL,
+  query += "`gambling_enable`,";          // tinyint(1) NOT NULL,
+  query += "`gambling_percent`,";         // decimal(5, 2) NOT NULL,
   query += "`news_enable`,";              // tinyint(1) NOT NULL,
   query += "`weekend_enable`,";           // tinyint(1) NOT NULL,
   query += "`trail_total`,";              // tinyint(1) NOT NULL,
   query += "`trail_total_type`,";         // int NOT NULL,
   query += "`is_secure`";                 // tinyint(1) NOT NULL,
 
-  query += ") VALUES";
-
-  query += " (";
+  query += ") VALUES(";
 
   query += IntegerFild(Task.AccountId())              + ",";    //"`id`,";                      // int unsigned NOT NULL,
   query += StringFild(Task.Server())                  + ",";    //"`server`,";                  // varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -874,12 +779,12 @@ bool CDatabase::StoreAccountData(void)
   if(Task.Result.ErrorCode() == 0)
    {
     query += StringFild(Task.Result.DealChekPoint())  + ",";    //"`hash_point_a`,";            // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-    query += StringFild(Task.Result.EquityChekPoint()) + ",";   //"`hash_point_b`,";            // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    query += StringFild(Task.NewEquityChekPoint())    + ",";    //"`hash_point_b`,";            // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     query += DateTimeFild(History.EndTime())          + ",";    //"`last_update`,";             // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     query += StringFild(m_hash_id)                    + ",";    //"`history_id`,";              // varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
    }
   query += IntegerFild(Task.Task())                   + ",";    //"`task`,";                    // int NOT NULL,
-  query += IntegerFild(1)                             + ",";    //"`algorithm`,";               // int NOT NULL,
+  query += IntegerFild(ALGORITHM_NORMAL)              + ",";    //"`algorithm`,";               // int NOT NULL,
   query += DoubleFild(Task.InitBalance(), 2)          + ",";    //"`initial_balance`,";         // decimal(15, 2) NOT NULL,
   query += DoubleFild(Task.DailyRiskPercent(), 2)     + ",";    //"`daily_drawdown_percent`,";  // decimal(5, 2) NOT NULL,
   query += DoubleFild(Task.TotalRiskPercent(), 2)     + ",";    //"`total_drawdown_percent`,";  // decimal(5, 2) NOT NULL,
@@ -891,9 +796,36 @@ bool CDatabase::StoreAccountData(void)
   query += IntegerFild(Task.UseWeekend())             + ",";    //"`weekend_enable`,";          // tinyint(1) NOT NULL,
   query += IntegerFild(Task.UseTrailTotal())          + ",";    //"`trail_total`,";             // tinyint(1) NOT NULL,
   query += IntegerFild(Task.TrailTotal())             + ",";    //"`trail_total_type`,";        // int NOT NULL,
-  query += IntegerFild(Task.IsSecure())               + "";     //"`is_secure`";                // tinyint(1) NOT NULL,
+  query += IntegerFild(Task.IsSecure())               ;         //"`is_secure`";                // tinyint(1) NOT NULL,
 
-  query += ");";
+  query += ")";
+
+  query += "ON DUPLICATE KEY UPDATE ";
+
+  query += "`server`=VALUES(`server`),";
+  query += "`login`=VALUES(`login`),";
+  query += "`investor_password`=VALUES(`investor_password`),";
+  if(Task.Result.ErrorCode() == 0)
+   {
+    query += " `hash_point_a`=VALUES(`hash_point_a`),";
+    query += "`hash_point_b`=VALUES(`hash_point_b`),";
+    query += "`last_update`=VALUES(`last_update`),";
+    query += "`last_history_id` = VALUES(`last_history_id`),";
+   }
+  query += "`task` = VALUES(`task`),";
+  query += "`algorithm` = VALUES(`algorithm`),";
+  query += "`initial_balance` = VALUES(`initial_balance`),";
+  query += "`daily_drawdown_percent` = VALUES(`daily_drawdown_percent`),";
+  query += "`total_drawdown_percent` = VALUES(`total_drawdown_percent`),";
+  query += "`tick_scalp_enable` = VALUES(`tick_scalp_enable`),";
+  query += "`tick_scalp_term` = VALUES(`tick_scalp_term`),";
+  query += "`gambling_enable` = VALUES(`gambling_enable`),";
+  query += "`gambling_percent` = VALUES(`gambling_percent`),";
+  query += "`news_enable` = VALUES(`news_enable`),";
+  query += "`weekend_enable` = VALUES(`weekend_enable`),";
+  query += "`trail_total` = VALUES(`trail_total`),";
+  query += "`trail_total_type` = VALUES(`trail_total_type`),";
+  query += "`is_secure` = VALUES(`is_secure`);";
 
   return TransactionExecute(query);
  }
@@ -905,11 +837,8 @@ bool CDatabase::StoreDeals(void)
   if(!DEF_SETTING_STOR_DEAL)
     return true;
 //---
-  string query = NULL;
   bool is_start = true;
-
-  if(Task.IsResetTask())
-    query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_DEAL + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + ";";
+  string query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_DEAL + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + " AND time>" + Timestamp3Fild(Task.EquityCheckPointTimeMsc()) + ";";
 
   uint total = History.DealsList.Total();
   for(uint i = 0; i < total; i++)
@@ -927,9 +856,7 @@ bool CDatabase::StoreDeals(void)
         query += "`account_id`,";      //INT UNSIGNED      NOT NULL,";
         query += "`deal_ticket`,";     //BIGINT UNSIGNED   NOT NULL,";
         query += "`order_ticket`,";    //BIGINT UNSIGNED   NOT NULL,";
-        query += "`time`,";            //TIMESTAMP         NOT NULL,";
-        query += "`time_rate`,";       //TIMESTAMP         NOT NULL,";
-        query += "`time_msc`,";        //BIGINT UNSIGNED   NOT NULL,";
+        query += "`time`,";            //TIMESTAMP(3)      NOT NULL,";
         query += "`type`,";            //TINYINT UNSIGNED  NOT NULL,";
         query += "`entry`,";           //TINYINT UNSIGNED  NOT NULL,";
         query += "`magic`,";           //BIGINT            ZEROFILL NOT NULL,";
@@ -960,13 +887,11 @@ bool CDatabase::StoreDeals(void)
       query += IntegerFild(Task.AccountId())          + ",";   //"`account_id`,";      //INT UNSIGNED      NOT NULL,";
       query += IntegerFild(Deal.Ticket())             + ",";   //"`deal_ticket`,";     //BIGINT UNSIGNED   NOT NULL,";
       query += IntegerFild(Deal.OrderTicket())        + ",";   //"`order_ticket`,";    //BIGINT UNSIGNED   NOT NULL,";
-      query += DateTimeFild(Deal.Time())              + ",";   //"`time`,";            //TIMESTAMP         NOT NULL,";
-      query += DateTimeFild(Deal.RateTime())          + ",";   //"`time_rate`,";       //TIMESTAMP         NOT NULL,";
-      query += IntegerFild(Deal.TimeMsc())            + ",";   //"`time_msc`,";        //BIGINT UNSIGNED   NOT NULL,";
-      query += IntegerFild((int)Deal.DealType())      + ",";   //"`type`,";            //TINYINT UNSIGNED  NOT NULL,";
-      query += IntegerFild((int)Deal.Entry())         + ",";   //"`entry`,";           //TINYINT UNSIGNED  NOT NULL,";
+      query += Timestamp3Fild(Deal.TimeMsc())         + ",";   //"`time`,";            //TIMESTAMP(3)      NOT NULL,";
+      query += IntegerFild(Deal.MysqlEnumDealType())  + ",";   //"`type`,";            //TINYINT UNSIGNED  NOT NULL,";
+      query += IntegerFild(Deal.MysqlEnumEntry())     + ",";   //"`entry`,";           //TINYINT UNSIGNED  NOT NULL,";
       query += IntegerFild(Deal.Magic())              + ",";   //"`magic`,";           //BIGINT            ZEROFILL NOT NULL,";
-      query += IntegerFild((int)Deal.Reason())        + ",";   //"`reason`,";          //TINYINT UNSIGNED  NOT NULL,";
+      query += IntegerFild(Deal.MysqlEnumReason())    + ",";   //"`reason`,";          //TINYINT UNSIGNED  NOT NULL,";
       query += IntegerFild(Deal.PositionId())         + ",";   //"`position_ticket`,"; //BIGINT UNSIGNED   NOT NULL,";
       query += DoubleFild(Deal.Volume(), 2)           + ",";   //"`volume`,";          //DOUBLE            NOT NULL,";
       query += DoubleFild(Deal.Price(), digits)       + ",";   //"`price`,";           //DOUBLE            NOT NULL,";
@@ -1011,11 +936,8 @@ bool CDatabase::StorePositions(void)
   if(!DEF_SETTING_STOR_POSITION)
     return true;
 //---
-  string query = NULL;
   bool is_start = true;
-
-  if(Task.IsResetTask())
-    query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_POSITION + "` WHERE `account_id`=" + IntegerFild(Task.AccountId()) + ";";
+  string query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_POSITION + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + " AND open_time>" + Timestamp3Fild(Task.EquityCheckPointTimeMsc()) + ";";
 
   uint total = History.PositionList.Total();
   for(uint i = 0; i < total; i++)
@@ -1035,9 +957,7 @@ bool CDatabase::StorePositions(void)
 
         query += "`account_id`,";         //INT UNSIGNED      NOT NULL,";
         query += "`open_deal_ticket`,";   //BIGINT UNSIGNED   NOT NULL,";
-        query += "`open_time`,";          //TIMESTAMP         NOT NULL,";
-        query += "`open_time_rate`,";     //TIMESTAMP         NOT NULL,";
-        query += "`open_time_msc`,";      //BIGINT            NOT NULL,";
+        query += "`open_time`,";          //TIMESTAMP(3)      NOT NULL,";
         query += "`open_price`,";         //DOUBLE            NOT NULL,";
         query += "`open_stop_loss`,";     //DOUBLE            NULL,";
         query += "`open_take_profit`,";   //DOUBLE            NULL,";
@@ -1045,9 +965,7 @@ bool CDatabase::StorePositions(void)
         query += "`open_swap`,";          //DOUBLE            NOT NULL,";
         query += "`open_fee`,";           //DOUBLE            NOT NULL,";
         query += "`close_deal_ticket`,";  //BIGINT UNSIGNED   NOT NULL,";
-        query += "`close_time`,";         //TIMESTAMP         NOT NULL,";
-        query += "`close_time_rate`,";    //TIMESTAMP         NOT NULL,";
-        query += "`close_time_msc`,";     //BIGINT            NOT NULL,";
+        query += "`close_time`,";         //TIMESTAMP(3)         NOT NULL,";
         query += "`close_price`,";        //DOUBLE            NOT NULL,";
         query += "`close_stop_loss`,";    //DOUBLE            NULL,";
         query += "`close_take_profit`,";  //DOUBLE            NULL,";
@@ -1078,9 +996,7 @@ bool CDatabase::StorePositions(void)
 
       query += IntegerFild(Task.AccountId()) + ",";             //"`account_id`,";         //INT UNSIGNED      NOT NULL,";
       query += IntegerFild(Position.OpenTicket()) + ",";        //"`open_deal_ticket`,";   //BIGINT UNSIGNED   NOT NULL,";
-      query += DateTimeFild(Position.OpenTime()) + ",";         //"`open_time`,";          //TIMESTAMP         NOT NULL,";
-      query += DateTimeFild(Position.OpenRateTime()) + ",";     //"`open_time_rate`,";     //TIMESTAMP         NOT NULL,";
-      query += IntegerFild(Position.OpenTimeMsc()) + ",";       //"`open_time_msc`,";      //BIGINT            NOT NULL,";
+      query += Timestamp3Fild(Position.OpenTimeMsc()) + ",";    //"`open_time`,";          //TIMESTAMP(3)      NOT NULL,";
       query += DoubleFild(Position.OpenPrice(), digits) + ",";  //"`open_price`,";         //DOUBLE            NOT NULL,";
       query += DoubleFild(Position.OpenSl(), digits) + ",";     //query += "`open_stop_loss`,";     //DOUBLE            NULL,";
       query += DoubleFild(Position.OpenTp(), digits) + ",";     //query += "`open_take_profit`,";   //DOUBLE            NULL,";
@@ -1088,9 +1004,7 @@ bool CDatabase::StorePositions(void)
       query += DoubleFild(Position.OpenSwap(), 2) + ",";        //"`open_swap`,";          //DOUBLE            NOT NULL,";
       query += DoubleFild(Position.OpenFee(), 2) + ",";         //"`open_fee`,";           //DOUBLE            NOT NULL,";
       query += IntegerFild(Position.CloseTicket()) + ",";       //"`close_deal_ticket`,";  //BIGINT UNSIGNED   NOT NULL,";
-      query += DateTimeFild(Position.CloseTime()) + ",";        //"`close_time`,";         //TIMESTAMP         NOT NULL,";
-      query += DateTimeFild(Position.CloseRateTime()) + ",";    //"`close_time_rate`,";    //TIMESTAMP         NOT NULL,";
-      query += IntegerFild(Position.CloseTimeMsc()) + ",";      //"`close_time_msc`,";     //BIGINT            NOT NULL,";
+      query += Timestamp3Fild(Position.CloseTimeMsc()) + ",";   //"`close_time`,";         //TIMESTAMP(3)      NOT NULL,";
       query += DoubleFild(Position.ClosePrice(), digits) + ","; //"`close_price`,";        //DOUBLE            NOT NULL,";
       query += DoubleFild(Position.CloseSl(), digits) + ",";    //query += "`open_stop_loss`,";     //DOUBLE            NULL,";
       query += DoubleFild(Position.CloseTp(), digits) + ",";    //query += "`open_take_profit`,";   //DOUBLE            NULL,";
@@ -1101,7 +1015,7 @@ bool CDatabase::StorePositions(void)
       query += DoubleFild(Position.Profit(), 2) + ",";          //"`profit`,";             //DOUBLE            NOT NULL,";
       query += DoubleFild(Position.NetProfit(), 2) + ",";       //"`net_profit`,";         //DOUBLE            NOT NULL,";
       query += IntegerFild(Position.TradeDuratianMsc()) + ",";  //"`duratian_msc`,";       //BIGINT UNSIGNED   NOT NULL,";
-      query += IntegerFild(Position.PositionType()) + ",";      //"`type`,";               //TINYINT           NOT NULL,";
+      query += IntegerFild(Position.MysqlEnumPositionType()) + ","; //"`type`,";               //TINYINT           NOT NULL,";
       query += DoubleFild(Position.Volume(), 2) + ",";          //"`volume`,";             //DOUBLE            NOT NULL,";
       query += StringFild(Position.Symbol()) + ",";             //"`symbol`,";             //VARCHAR ( 255 )   NOT NULL,";
       query += IntegerFild(Position.PositionId()) + ",";        //"`position_ticket`,";    //BIGINT UNSIGNED   NOT NULL,";
@@ -1141,11 +1055,8 @@ bool CDatabase::StoreBalance(void)
   if(!DEF_SETTING_STOR_BALANCE)
     return true;
 //---
-  string query = NULL;
   bool is_start = true;
-
-  if(Task.IsResetTask())
-    query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_BALANCE + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + ";";
+  string query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_BALANCE + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + " AND time>" + Timestamp3Fild(Task.EquityCheckPointTimeMsc()) + ";";
 
   uint total = History.DealsList.Total();
   for(uint i = 0; i < total; i++)
@@ -1161,6 +1072,7 @@ bool CDatabase::StoreBalance(void)
         query += "`deal_ticket`,";       //BIGINT UNSIGNED   NOT NULL,";
         query += "`account_id`,";        //INT UNSIGNED      NOT NULL,";
         query += "`time_msc`,";          //BIGINT UNSIGNED   NOT NULL,";
+        query += "`time`,";
         query += "`balance`,";           //DOUBLE            NOT NULL,";
         query += "`last_day_balance`,";  //DOUBLE            NOT NULL,";
         query += "`daily_limit`,";       //DOUBLE            NOT NULL,";
@@ -1177,6 +1089,7 @@ bool CDatabase::StoreBalance(void)
       query += IntegerFild(Deal.Ticket())             + ",";   //"`deal_ticket`,";     //BIGINT UNSIGNED   NOT NULL,";
       query += IntegerFild(Task.AccountId())          + ",";   //"`account_id`,";        //INT UNSIGNED      NOT NULL,";
       query += IntegerFild(Deal.TimeMsc())            + ",";   //BIGINT UNSIGNED   NOT NULL,";
+      query += Timestamp3Fild(Deal.TimeMsc())         + ",";
       query += DoubleFild(Deal.Balance(), 2)          + ",";   //"`balance`";            //DOUBLE            NOT NULL,";
       query += DoubleFild(Deal.LastDayBalance(), 2)   + ",";   //"`last_day_balance`,";  //DOUBLE            NOT NULL,";
       query += DoubleFild(Deal.DailyLimit(), 2)       + ",";   //"`daily_limit`,";       //DOUBLE            NOT NULL,";
@@ -1209,11 +1122,8 @@ bool CDatabase::StoreBalance(void)
 //+------------------------------------------------------------------+
 bool CDatabase::StoreEquity(void)
  {
-  string query = NULL;
   bool is_start = true;
-
-  if(Task.IsResetTask())
-    query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_EQUITY + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + ";";
+  string query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_EQUITY + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + " AND time>" + Timestamp3Fild(Task.EquityCheckPointTimeMsc()) + ";";
 
   uint total = Series.Total();
   for(uint i = 0; i < total; i++)
@@ -1222,19 +1132,19 @@ bool CDatabase::StoreEquity(void)
      {
       query += "REPLACE INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_EQUITY + "` (";
 
-      query += "`account_id`,";    //INT UNSIGNED      NOT NULL,";
-      query += "`time_msc`,";      //BIGINT            NOT NULL,
-      query += "`time`,";          //TIMESTAMP         NOT NULL,";
-      query += "`balance`,";       // DOUBLE           NULL,
-      query += "`high_equity`,";   //DOUBLE            NULL,";
-      query += "`low_equity`,";    //DOUBLE            NULL,";
+      query += "`account_id`,";              //INT UNSIGNED      NOT NULL,";
+      query += "`time_msc`,";                //BIGINT            NOT NULL,
+      query += "`time`,";                    //TIMESTAMP(3)      NOT NULL,";
+      query += "`balance`,";                 // DOUBLE           NULL,
+      query += "`high_equity`,";             //DOUBLE            NULL,";
+      query += "`low_equity`,";              //DOUBLE            NULL,";
       if(DEF_SETTING_STOR_EQUITY == STOR_EQUITY_FULL)
        {
-        query += "`open_equity`,";   //DOUBLE            NULL,";
-        query += "`close_equity`,";  //DOUBLE            NULL,";
+        query += "`open_equity`,";           //DOUBLE            NULL,";
+        query += "`close_equity`,";          //DOUBLE            NULL,";
        }
-      query += "`daily_limit`,";   //DOUBLE            NULL,";
-      query += "`total_limit`,";   //DOUBLE            NULL,";
+      query += "`daily_limit`,";             //DOUBLE            NULL,";
+      query += "`total_limit`,";             //DOUBLE            NULL,";
       query += "`is_balance_gambeling`,";    // TINYINT ( 1 ) NOT NULL DEFAULT 0,
       query += "`is_equity_gambeling`";      // TINYINT ( 1 ) NOT NULL DEFAULT 0,
 
@@ -1248,14 +1158,14 @@ bool CDatabase::StoreEquity(void)
 
     query += IntegerFild(Task.AccountId())               + ",";   //"`account_id`,";    //INT UNSIGNED      NOT NULL,";
     query += IntegerFild(Series.m_time_msc[i])           + ",";   //"`time_msc`,";      //BIGINT            NOT NULL,
-    query += DateTimeFild(Series.m_time[i])              + ",";   //"`time`,";          //TIMESTAMP         NOT NULL,";
+    query += Timestamp3Fild(Series.m_time_msc[i])        + ",";   //"`time`,";          //TIMESTAMP(3)      NOT NULL,";
     query += DoubleFild(Series.m_balance[i], 2)          + ",";   //"`balance`,";       //DOUBLE            NULL,";
     query += DoubleFild(Series.m_equity_high[i], 2)      + ",";   //"`high_equity`,";   //DOUBLE            NULL,";
     query += DoubleFild(Series.m_equity_low[i], 2)       + ",";   //"`low_equity`,";    //DOUBLE            NULL,";
     if(DEF_SETTING_STOR_EQUITY == STOR_EQUITY_FULL)
      {
-      query += DoubleFild(Series.m_equity_open[i], 2)      + ",";   //"`open_equity`,";   //DOUBLE            NULL,";
-      query += DoubleFild(Series.m_equity_close[i], 2)     + ",";   //"`close_equity`";   //DOUBLE            NULL,";
+      query += DoubleFild(Series.m_equity_open[i], 2)    + ",";   //"`open_equity`,";   //DOUBLE            NULL,";
+      query += DoubleFild(Series.m_equity_close[i], 2)   + ",";   //"`close_equity`";   //DOUBLE            NULL,";
      }
     query += DoubleFild(Series.m_day_limit[i], 2)        + ",";   //"`daily_limit`,";   //DOUBLE            NULL,";
     query += DoubleFild(Series.m_total_limit[i], 2)      + ",";   //"`total_limit`";    //DOUBLE            NULL,";
@@ -1342,7 +1252,7 @@ bool CDatabase::StoreStatement(void)
 
   query += ") VALUES (";
 
-  query += IntegerFild(Task.AccountId()) + ",";   //"`account_id`,";        //INT UNSIGNED      NOT NULL,";
+  query += IntegerFild(Task.AccountId()) + ",";
   query += DoubleFild(Statement.Profit()) + ",";
   query += DoubleFild(Statement.GrossProfit()) + ",";
   query += DoubleFild(Statement.GrossLoss()) + ",";
@@ -1394,11 +1304,8 @@ bool CDatabase::StoreStatement(void)
 //+------------------------------------------------------------------+
 bool  CDatabase::StoreDrawdown(void)
  {
-  string query = NULL;
   bool is_start = true;
-
-  if(Task.IsResetTask())
-    query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_DRAWDOWN + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + ";";
+  string query = "DELETE FROM `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_DRAWDOWN + "` WHERE account_id=" + IntegerFild(Task.AccountId()) + " AND `time`>" + Timestamp3Fild(Task.EquityCheckPointTimeMsc()) + ";";
 
   uint total = Equity.DrawDownList.Total();
   for(uint i = 0; i < total; i++)
@@ -1413,12 +1320,12 @@ bool  CDatabase::StoreDrawdown(void)
       query += "REPLACE INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_DRAWDOWN + "` (";
 
       query += "`account_id`,";    //INT UNSIGNED      NOT NULL,";
-      query += "`source,";
-      query += "`type,";
-      query += "`time,";
-      query += "`time_msc,";
-      query += "`limit,";
-      query += "`value";
+      query += "`source`,";
+      query += "`type`,";
+      query += "`time`,";
+      query += "`time_msc`,";
+      query += "`limit`,";
+      query += "`value`";
 
       query += ") VALUES";
       is_start = false;
@@ -1428,16 +1335,15 @@ bool  CDatabase::StoreDrawdown(void)
 
     query += " (";
 
-    query += IntegerFild(Task.AccountId())               + ",";   //"`account_id`,";    //INT UNSIGNED      NOT NULL,";
-    query += StringFild(DD.source)                       + ",";
-    query += StringFild(DD.type)                         + ",";
-    query += DateTimeFild(DD.time)                       + ",";
+    query += IntegerFild(Task.AccountId())               + ",";
+    query += IntegerFild((int)DD.source)                 + ",";
+    query += IntegerFild((int)DD.type)                   + ",";
+    query += Timestamp3Fild(DD.time_msc)                 + ",";
     query += IntegerFild(DD.time_msc)                    + ",";
     query += DoubleFild(DD.limit)                        + ",";
     query += DoubleFild(DD.value)                        + "";
 
     query += ")";
-
 
     if(i != 0 && i % 300 == 0)
      {
@@ -1467,7 +1373,14 @@ bool  CDatabase::StoreObjective(void)
   if(!DEF_SETTING_STOR_OBJECTIVE)
     return true;
 //---
-  string query = "CALL UpdateObjective(" + IntegerFild(Task.AccountId()) + ");";
+  string query = NULL;
+  query += "CALL UpdateObjective(" + IntegerFild(Task.AccountId()) + ");";
+
+  query += "UPDATE `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_OBJECTIVE        + "` ";
+  query += "SET ";
+  query += "open_position_count=" + IntegerFild(History.TotalOpenPositons()) + ", ";
+  query += "open_order_count="    + IntegerFild(History.TotalOpenOrders())   + " ";
+  query += "WHERE id="            + IntegerFild(Task.AccountId())            + ";";
 //---
   return  TransactionExecute(query);
  }
@@ -1479,7 +1392,7 @@ bool  CDatabase::StoreCheckPoints(void)
   string query = NULL;
   query += "UPDATE `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_ACCOUNT + "` SET ";
   query += "`hash_point_a` = " + StringFild(Task.Result.DealChekPoint()) + ", ";
-  query += "`hash_point_b` = " + StringFild(Task.Result.EquityChekPoint()) + " ";
+  query += "`hash_point_b` = " + StringFild(Task.NewEquityChekPoint()) + " ";
   query += "WHERE `id` = " + IntegerFild(Task.AccountId()) + ";";
 //---
   return  TransactionExecute(query);
@@ -1509,7 +1422,7 @@ bool CDatabase::StorHistory(CTask *_Task, const bool _is_trans = false)
 //---
   string query = NULL;
   if(!_is_trans)
-     m_hash_id = _Task.HashID();
+    m_hash_id = _Task.HashID();
 
 
   query += "REPLACE INTO `" + DEF_DB_DB_Name + "`.`" + DEF_DB_TBL_NODE_HISTORY + "` (";
@@ -1554,7 +1467,6 @@ bool CDatabase::StorHistory(CTask *_Task, const bool _is_trans = false)
   query += "`new_hash_point_a`,";               //varchar 255
   query += "`new_hash_point_b`";                //varchar 255
 
-
   query += ") VALUES (";
 
   query += StringFild(m_hash_id) + ",";                                //varchar 255
@@ -1595,7 +1507,7 @@ bool CDatabase::StorHistory(CTask *_Task, const bool _is_trans = false)
   query += IntegerFild(_Task.Result.ErrorCode()) + ",";               //int
   query += StringFild(_Task.Result.ErrorDescription()) + ",";         //varchar 255
   query += StringFild(_Task.Result.HashPointA()) + ",";               //varchar 255
-  query += StringFild(_Task.Result.HashPointB()) + "";                //varchar 255
+  query += StringFild(_Task.NewEquityChekPoint()) + "";                //varchar 255
 
   query += ");";
 
@@ -1607,9 +1519,6 @@ bool CDatabase::StorHistory(CTask *_Task, const bool _is_trans = false)
   else
     if(!Execute(query))
       return false;
-
-  //if(_Task.Result.ErrorCode() == 0)
-  //  return StoreNodeLastUpdate(hash_id, _is_trans);
 //---
   return true;
  }

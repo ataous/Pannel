@@ -96,6 +96,7 @@ public:
   string             HashPointA(void)                             { return EquityPoint.GetChekPoint();}
   string             HashPointB(void)                             { return DealPoint.GetChekPoint();}
 
+  bool               IsSetEquityChekPoint(void)             const { return EquityPoint.IsSet();}
   string             EquityChekPoint(void)                        { return EquityPoint.GetChekPoint();}
   void               EquityChekPoint(const long   _time_msc,
                                      const double _balance,

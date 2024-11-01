@@ -84,9 +84,105 @@ public:
   datetime           RateTime(void)       const { return time_rate;}
   ulong              TimeMsc(void)        const { return time_msc;}
   ENUM_DEAL_TYPE     DealType(void)       const { return type;}
+  int                MysqlEnumDealType(void)
+   {
+    // 'Buy', 'Sell', 'Balance', 'Credit', 'Charge', 'Correction', 'Bonus', 'Commission', 'Daily Commission', 'Monthly Commission', 'Daily Agent Commission', 'Monthly Agent Commission', 'Interest Rate', 'Canceled Buy', 'Canceled Sell', 'Dividend', 'Franked', 'Tax', 'Unknown'
+    switch(type)
+     {
+      case DEAL_TYPE_BUY:                       // 'Buy'
+        return 1;
+      case DEAL_TYPE_SELL:                      // 'Sell'
+        return 2;
+      case DEAL_TYPE_BALANCE:                   // 'Balance'
+        return 3;
+      case DEAL_TYPE_CREDIT:                    // 'Credit'
+        return 4;
+      case DEAL_TYPE_CHARGE:                    // 'Charge'
+        return 5;
+      case DEAL_TYPE_CORRECTION:                // 'Correction'
+        return 6;
+      case DEAL_TYPE_BONUS:                     // 'Bonus'
+        return 7;
+      case DEAL_TYPE_COMMISSION:                // 'Commission'
+        return 8;
+      case DEAL_TYPE_COMMISSION_DAILY:          // 'Daily Commission'
+        return 9;
+      case DEAL_TYPE_COMMISSION_MONTHLY:        // 'Monthly Commission'
+        return 10;
+      case DEAL_TYPE_COMMISSION_AGENT_DAILY:    // 'Daily Agent Commission'
+        return 11;
+      case DEAL_TYPE_COMMISSION_AGENT_MONTHLY:  // 'Monthly Agent Commission'
+        return 12;
+      case DEAL_TYPE_INTEREST:                  // 'Interest Rate'
+        return 13;
+      case DEAL_TYPE_BUY_CANCELED:              // 'Canceled Buy'
+        return 14;
+      case DEAL_TYPE_SELL_CANCELED:             // 'Canceled Sell'
+        return 15;
+      case DEAL_DIVIDEND:                       // 'Dividend'
+        return 16;
+      case DEAL_DIVIDEND_FRANKED:               // 'Franked'
+        return 17;
+      case DEAL_TAX:                            // 'Tax'
+        return 18;
+      default:
+        break;
+     }
+    return 19;// 'Unknown'
+   }
   ENUM_DEAL_ENTRY    Entry(void)          const { return entry;}
+  int                MysqlEnumEntry(void)
+   {
+    //'In', 'Out', 'Reverse', 'Close By Opposite', 'Unknown'
+    switch(entry)
+     {
+      case DEAL_ENTRY_IN:        //'In'
+        return 1;
+      case DEAL_ENTRY_OUT:       //'Out'
+        return 2;
+      case DEAL_ENTRY_INOUT:     //'Reverse'
+        return 3;
+      case DEAL_ENTRY_OUT_BY:    //'Close By Opposite'
+        return 4;
+      default:
+        break;
+     }
+    return 5;//'Unknown'
+   }
   long               Magic(void)          const { return magic;}
   ENUM_DEAL_REASON   Reason(void)         const { return reason;}
+  int                MysqlEnumReason(void)
+   {
+    //'Desktop Terminal', 'Mobile Application', 'Web Platform', 'MQL5 Program', 'Stop Loss Activation', 'Take Profit Activation', 'Stop Out', 'Rollover', 'Variation Margin', 'SPLIT', 'Corporate Action', 'Unknown'
+    switch(reason)
+     {
+      case DEAL_REASON_CLIENT:            // Desktop Terminal
+        return 1;
+      case DEAL_REASON_MOBILE:            // Mobile Application
+        return 2;
+      case DEAL_REASON_WEB:               // Web Platform
+        return 3;
+      case DEAL_REASON_EXPERT:            // MQL5 Program
+        return 4;
+      case DEAL_REASON_SL:                // Stop Loss Activation
+        return 5;
+      case DEAL_REASON_TP:                // Take Profit Activation
+        return 6;
+      case DEAL_REASON_SO:                // Stop Out
+        return 7;
+      case DEAL_REASON_ROLLOVER:          // Rollover
+        return 8;
+      case DEAL_REASON_VMARGIN:           // Variation Margin
+        return 9;
+      case DEAL_REASON_SPLIT:             // SPLIT
+        return 10;
+      case DEAL_REASON_CORPORATE_ACTION:  // Corporate Action
+        return 11;
+      default:
+        break;
+     }
+    return 12;//'Unknown'
+   }
   long               PositionId(void)     const { return position_id;}
   double             Volume(void)         const { return volume;}
   double             Price(void)          const { return price;}

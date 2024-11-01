@@ -37,8 +37,8 @@ enum ENUM_STOR_EQUITY_TIPE
 //+------------------------------------------------------------------+
 //| WebSocket Setting                                                |
 //+------------------------------------------------------------------+
-//#define DEF_WEBSOCKET_SERVER              "wss://node.sgbdev.com:443"
-#define DEF_WEBSOCKET_SERVER              "wss://free.blr2.piesocket.com/v3/1?api_key=slpnzeEp97tmelOkd0vpGQndM9RhpuULsuNjtJfl&notify_self=1"
+#define DEF_WEBSOCKET_SERVER              "wss://node.sgbdev.com:443"
+//#define DEF_WEBSOCKET_SERVER              "wss://free.blr2.piesocket.com/v3/1?api_key=slpnzeEp97tmelOkd0vpGQndM9RhpuULsuNjtJfl&notify_self=1"
 
 #define DEF_SEND_REULT_TO_SOCKET          true
 #define DEF_SEND_REULT_TO_API             true

@@ -22,6 +22,7 @@ private:
                      m_day_limit,
                      m_total_limit;
   string             m_check_point;
+  bool               m_is_set;
 
   void               TimeMsc(const long _value)       { m_time_msc = _value;}
   void               Balance(const double _value)     { m_balance = _value;}
@@ -31,11 +32,14 @@ private:
 public:
                      CEquityCheckPoint();
                     ~CEquityCheckPoint();
-
+                    
+  bool               IsSet(void) const { return m_is_set;}
+  
   void               Reset(void)
    {
     m_time_msc = 0;
     m_balance = 0;
+    m_is_set = false;
    };
 
   long               TimeMsc(void)              const { return m_time_msc;}
@@ -49,6 +53,8 @@ public:
                                   const double _total_limit);
   void               SetChekPoint(const string _hash);
   string             GetChekPoint(void);
+  
+  
  };
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -75,6 +81,8 @@ void CEquityCheckPoint::SetChekPoint(const long   _time_msc,
   m_balance = _balance;
   m_day_limit = _day_limit;
   m_total_limit = _total_limit;
+  
+  m_is_set = true;
  }
 //+------------------------------------------------------------------+
 //|                                                                  |

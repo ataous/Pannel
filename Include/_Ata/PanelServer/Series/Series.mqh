@@ -415,7 +415,7 @@ bool CSeries::CreateMethodThree(void)
     if(!CFunc::AddToArray(Deal.TimeMsc(), temp_time_msc))
       return false;
    }
-//--- Add Position Open Time Until Close
+//--- Add Position OpenTime Until CloseTime
   total =  History.PositionList.Total();
   for(int i = 0; i < total; i++)
    {

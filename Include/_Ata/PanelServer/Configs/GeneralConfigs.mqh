@@ -12,6 +12,9 @@
 #define DEF_APP_NAME                      "PannelService"
 #define DEF_PLATFORM                      "mt5"
 #define DEF_DAY_SEC                       86400
+#define DEF_SLEEP_INTERVAL                100
+#define DEF_LICENCE_SLEEP_INTERVAL        1000
+#define DEF_PAUSE_SLEEP_INTERVAL          10000
 //+------------------------------------------------------------------+
 //| WebSocket Setting                                                |
 //+------------------------------------------------------------------+

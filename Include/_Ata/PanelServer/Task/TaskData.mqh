@@ -17,19 +17,9 @@ enum ENUM_TASK_TYPE
  {
   TASK_TYPE_RESET = 1,              // Algo: Normal  - From 0 time to current time  - calc all data
   TASK_TYPE_UPDATE = 2,             // Algo: Normal  - From last check point time to current time - calc all data
-  TASK_TYPE_RESET_STREAM = 3,       // Algo: Normal  - From 0 time to current time  - calc all data then stream real data
-  TASK_TYPE_UPDATE_SREAM = 4,       // Algo: Normal  - From last check point time to current time - calc all data then stream real data
-//---
-  TASK_TYPE_CHEACK = 5,             // Algo: TickByTick  - From 0 time to current time  - calc all data
-//--- For 32 node in one
-  TASK_TYPE_RESET_DEAL = 6,         // Algo: Normal  - From 0 time to current time - calc deals and positions
-  TASK_TYPE_UPDATE_DEAL = 7,        // Algo: Normal  - From last check point time to current time - calc deals and positions
-
-  TASK_TYPE_RESET_EQ = 8,           // Algo: Normal  - From 0 time to current time - calc Eq & obj
-  TASK_TYPE_UPDATE_EQ = 9,          // Algo: Normal  - From last check point time to current time - calc Eq & obj
  };
 #define DEF_TASK_MIN_ID TASK_TYPE_RESET
-#define DEF_TASK_MAX_ID TASK_TYPE_UPDATE_EQ
+#define DEF_TASK_MAX_ID TASK_TYPE_UPDATE
 enum ENUM_TRAIL_TYPE
  {
   TRAIL_BALANCE = 1,
@@ -37,6 +27,13 @@ enum ENUM_TRAIL_TYPE
  };
 #define DEF_TASK_TRAIL_MIN_ID TRAIL_BALANCE
 #define DEF_TASK_TRAIL_MAX_ID TRAIL_EQUITY
+enum ENUM_ALGORITHM_TYPE
+ {
+  ALGORITHM_NORMAL = 1, // Normal
+  ALGORITHM_TICK  = 2,  // Tick
+  ALGORITHM_NANO_TICK = 3  // NanoTick
+ };
+
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -181,16 +178,9 @@ public:
    {
     switch(m_task)
      {
-      //case  TASK_TYPE_RESET:
-      case  TASK_TYPE_RESET_STREAM:
-      case  TASK_TYPE_CHEACK:
-      case  TASK_TYPE_RESET_DEAL:
-      case  TASK_TYPE_RESET_EQ:
+      case  TASK_TYPE_RESET:
         return true;
       case  TASK_TYPE_UPDATE:
-      case  TASK_TYPE_UPDATE_SREAM:
-      case  TASK_TYPE_UPDATE_DEAL:
-      case  TASK_TYPE_UPDATE_EQ:
         return false;
      }
     return false;
