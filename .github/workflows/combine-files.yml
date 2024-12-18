@@ -21,8 +21,8 @@ jobs:
         # ایجاد یک فایل جدید برای ذخیره همه کدها
         echo "Combined Code Files" > combined_output.txt
 
-        # ترکیب تمام فایل‌ها در یک فایل
-        find . -type f -name "*.mql5" -exec cat {} >> combined_output.txt \;
+        # ترکیب تمام فایل‌ها با پسوند .mq5 و .mqh در یک فایل
+        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) -exec cat {} >> combined_output.txt \;
 
     - name: Commit and push combined output file
       run: |
