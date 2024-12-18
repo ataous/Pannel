@@ -23,7 +23,7 @@ jobs:
 
         # ترکیب تمام فایل‌ها با پسوند .mq5 و .mqh در یک فایل .mq5
         # بعد از هر فایل یک خط جدید اضافه می‌شود و از پوشه‌های اضافی مانند .git نادیده گرفته می‌شود
-        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) ! -path "./.git/*" -exec sh -c 'cat {} >> combined_output.mq5; echo "" >> combined_output.mq5' \;
+        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) ! -path "./.git/*" -exec sh -c 'cat "{}" >> combined_output.mq5; echo -e "\n" >> combined_output.mq5' \;
 
     - name: Commit and push combined output file
       run: |
