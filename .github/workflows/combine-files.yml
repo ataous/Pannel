@@ -11,14 +11,17 @@ on:
 jobs:
   combine_files:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Combine all files into one
       run: |
-        # تنظیم Locale برای پشتیبانی از UTF-8
+        # تنظیم Locale برای UTF-8
+        sudo apt-get update
+        sudo apt-get install -y locales
+        sudo locale-gen en_US.UTF-8
         export LC_ALL=en_US.UTF-8
         export LANG=en_US.UTF-8
 
@@ -29,9 +32,20 @@ jobs:
         echo "" >> combined_output.mq5
 
         # ترکیب تمام فایل‌های .mq5 و .mqh به صورت UTF-8
-        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) -exec cat {} + >> combined_output.mq5
+        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) -exec cat {} + >> combined_output.mq5 || exit 1
 
     - name: Commit and push combined output file
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global user.name "GitHub Actions"
-        git config --global
+        git config --global user.email "actions@github.com"
+
+        # بررسی اینکه آیا فایل خروجی تغییر کرده است
+        if ! git diff --quiet; then
+          git add combined_output.mq5
+          git commit -m "Add combined output file"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
+        else
+          echo "No changes to commit"
+        fi
