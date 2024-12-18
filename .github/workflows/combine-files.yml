@@ -22,12 +22,20 @@ jobs:
         echo "// Combined Code Files" > combined_output.mq5
 
         # ترکیب تمام فایل‌ها با پسوند .mq5 و .mqh در یک فایل .mq5
-        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) -exec cat {} >> combined_output.mq5 \;
+        # بعد از هر فایل یک خط جدید اضافه می‌شود و از پوشه‌های اضافی مانند .git نادیده گرفته می‌شود
+        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) ! -path "./.git/*" -exec sh -c 'cat {} >> combined_output.mq5; echo "" >> combined_output.mq5' \;
 
     - name: Commit and push combined output file
       run: |
+        # پیکربندی اطلاعات کاربر برای کامیت در گیت
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
+        
+        # افزودن فایل ترکیب‌شده به مرحله کامیت
         git add combined_output.mq5
+        
+        # انجام کامیت و ارسال تغییرات
         git commit -m "Add combined output file"
+        
+        # ارسال تغییرات به مخزن با استفاده از GITHUB_TOKEN
         git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
