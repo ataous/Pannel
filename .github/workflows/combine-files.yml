@@ -3,10 +3,10 @@ name: Combine Code Files
 on:
   push:
     branches:
-      - main  # یا شاخه‌ای که می‌خواهید این عملیات روی آن انجام شود
+      - main
   pull_request:
     branches:
-      - main  # یا شاخه‌ای که می‌خواهید این عملیات روی آن انجام شود
+      - main
 
 jobs:
   combine_files:
@@ -18,24 +18,20 @@ jobs:
 
     - name: Combine all files into one
       run: |
-        # ایجاد یک فایل جدید برای ذخیره همه کدها با پسوند .mq5
-        echo "// Combined Code Files" > combined_output.mq5
+        # تنظیم Locale برای پشتیبانی از UTF-8
+        export LC_ALL=en_US.UTF-8
+        export LANG=en_US.UTF-8
 
-        # ترکیب تمام فایل‌ها با پسوند .mq5 و .mqh در یک فایل .mq5
-        # بعد از هر فایل یک خط جدید اضافه می‌شود و از پوشه‌های اضافی مانند .git نادیده گرفته می‌شود
-        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) ! -path "./.git/*" -exec sh -c 'cat "{}" >> combined_output.mq5; echo -e "\n" >> combined_output.mq5' \;
+        # ایجاد فایل نهایی با عنوان و مشخصات اولیه
+        echo "//+------------------------------------------------------------------+" > combined_output.mq5
+        echo "//| Combined Code Files - UTF-8                                       |" >> combined_output.mq5
+        echo "//+------------------------------------------------------------------+" >> combined_output.mq5
+        echo "" >> combined_output.mq5
+
+        # ترکیب تمام فایل‌های .mq5 و .mqh به صورت UTF-8
+        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) -exec cat {} + >> combined_output.mq5
 
     - name: Commit and push combined output file
       run: |
-        # پیکربندی اطلاعات کاربر برای کامیت در گیت
         git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        
-        # افزودن فایل ترکیب‌شده به مرحله کامیت
-        git add combined_output.mq5
-        
-        # انجام کامیت و ارسال تغییرات
-        git commit -m "Add combined output file"
-        
-        # ارسال تغییرات به مخزن با استفاده از GITHUB_TOKEN
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
+        git config --global
