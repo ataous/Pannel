@@ -16,23 +16,40 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Combine all files into one
+    - name: Setup locale for UTF-8
       run: |
-        # تنظیم Locale برای UTF-8
         sudo apt-get update
         sudo apt-get install -y locales
         sudo locale-gen en_US.UTF-8
         export LC_ALL=en_US.UTF-8
         export LANG=en_US.UTF-8
+        echo "Locale set to UTF-8"
 
-        # ایجاد فایل نهایی با عنوان و مشخصات اولیه
+    - name: Combine all files into one
+      run: |
+        # فایل خروجی ایجاد می‌شود
         echo "//+------------------------------------------------------------------+" > combined_output.mq5
-        echo "//| Combined Code Files - UTF-8                                       |" >> combined_output.mq5
+        echo "//| Combined Code Files (UTF-8 Encoding)                             |" >> combined_output.mq5
         echo "//+------------------------------------------------------------------+" >> combined_output.mq5
         echo "" >> combined_output.mq5
 
-        # ترکیب تمام فایل‌های .mq5 و .mqh به صورت UTF-8
-        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) -exec cat {} + >> combined_output.mq5 || exit 1
+        # یافتن فایل‌ها و بررسی وجود آن‌ها
+        FILE_COUNT=$(find . -type f \( -name "*.mq5" -o -name "*.mqh" \) | wc -l)
+        if [ "$FILE_COUNT" -eq 0 ]; then
+          echo "No .mq5 or .mqh files found. Exiting with error."
+          exit 1
+        fi
+
+        # ترکیب فایل‌ها
+        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) -exec cat {} + >> combined_output.mq5
+        echo "Files combined successfully into combined_output.mq5"
+
+    - name: Verify combined file content
+      run: |
+        if [ ! -s combined_output.mq5 ]; then
+          echo "Combined file is empty. Exiting with error."
+          exit 1
+        fi
 
     - name: Commit and push combined output file
       env:
@@ -41,11 +58,12 @@ jobs:
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
 
-        # بررسی اینکه آیا فایل خروجی تغییر کرده است
-        if ! git diff --quiet; then
-          git add combined_output.mq5
-          git commit -m "Add combined output file"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
-        else
-          echo "No changes to commit"
+        # بررسی تغییرات پیش از کامیت
+        git add combined_output.mq5
+        if git diff --cached --quiet; then
+          echo "No changes to commit. Exiting."
+          exit 0
         fi
+
+        git commit -m "Add combined output file"
+        git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
