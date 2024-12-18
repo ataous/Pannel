@@ -1,0 +1,31 @@
+name: Combine Files
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  combine_files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Combine files using Python script
+        run: |
+          python combine_files.py
+
+      - name: Commit and push combined output file
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add combined_output.txt
+          git commit -m "Add combined output file"
+          git push
