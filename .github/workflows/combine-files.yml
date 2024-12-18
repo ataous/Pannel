@@ -3,7 +3,7 @@ name: Combine Code Files
 on:
   push:
     branches:
-      - main
+      - main  # شاخه‌ای که این عملیات روی آن اجرا می‌شود
   pull_request:
     branches:
       - main
@@ -16,54 +16,51 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Setup locale for UTF-8
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Python dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y locales
-        sudo locale-gen en_US.UTF-8
-        export LC_ALL=en_US.UTF-8
-        export LANG=en_US.UTF-8
-        echo "Locale set to UTF-8"
+        python -m pip install --upgrade pip
 
-    - name: Combine all files into one
+    - name: Combine all .mq5 and .mqh files into one
       run: |
-        # فایل خروجی ایجاد می‌شود
-        echo "//+------------------------------------------------------------------+" > combined_output.mq5
-        echo "//| Combined Code Files (UTF-8 Encoding)                             |" >> combined_output.mq5
-        echo "//+------------------------------------------------------------------+" >> combined_output.mq5
-        echo "" >> combined_output.mq5
+        python <<EOF
+        import os
 
-        # یافتن فایل‌ها و بررسی وجود آن‌ها
-        FILE_COUNT=$(find . -type f \( -name "*.mq5" -o -name "*.mqh" \) | wc -l)
-        if [ "$FILE_COUNT" -eq 0 ]; then
-          echo "No .mq5 or .mqh files found. Exiting with error."
-          exit 1
-        fi
+        # نام فایل خروجی
+        output_file = 'combined_output.mq5'
 
-        # ترکیب فایل‌ها
-        find . -type f \( -name "*.mq5" -o -name "*.mqh" \) -exec cat {} + >> combined_output.mq5
-        echo "Files combined successfully into combined_output.mq5"
+        # باز کردن فایل خروجی برای نوشتن
+        with open(output_file, 'w', encoding='utf-8') as outfile:
+            # هدر کلی
+            outfile.write("//+------------------------------------------------------------------+\n")
+            outfile.write("//| Combined Code Files                                              |\n")
+            outfile.write("//+------------------------------------------------------------------+\n\n")
 
-    - name: Verify combined file content
-      run: |
-        if [ ! -s combined_output.mq5 ]; then
-          echo "Combined file is empty. Exiting with error."
-          exit 1
-        fi
+            # پیمایش تمام فایل‌ها در دایرکتوری و زیر دایرکتوری‌ها
+            for root, dirs, files in os.walk("."):
+                for file in files:
+                    # فقط فایل‌های با پسوند mq5 و mqh
+                    if file.endswith(('.mq5', '.mqh')):
+                        file_path = os.path.join(root, file)
+                        try:
+                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as infile:
+                                outfile.write(f"\n// --- Start of {file} ---\n\n")
+                                outfile.write(infile.read())
+                                outfile.write(f"\n// --- End of {file} ---\n\n")
+                        except Exception as e:
+                            print(f"خطا در خواندن فایل: {file_path}. پیام خطا: {e}")
+
+        print(f"تمام فایل‌ها به {output_file} ترکیب شده‌اند.")
+        EOF
 
     - name: Commit and push combined output file
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-
-        # بررسی تغییرات پیش از کامیت
         git add combined_output.mq5
-        if git diff --cached --quiet; then
-          echo "No changes to commit. Exiting."
-          exit 0
-        fi
-
         git commit -m "Add combined output file"
-        git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
